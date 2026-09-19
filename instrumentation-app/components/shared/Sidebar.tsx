@@ -12,6 +12,7 @@ import {
   Package,
   FileText,
   Bot,
+  BookOpen,
   ShieldCheck,
   LogOut,
   X,
@@ -27,6 +28,7 @@ const NAV_ITEMS = [
   { href: "/spare-parts", label: "Spare Parts", icon: Package },
   { href: "/reports", label: "Reports", icon: FileText },
   { href: "/ai-assistant", label: "AI Assistant", icon: Bot },
+  { href: "/knowledge-base", label: "Knowledge Base", icon: BookOpen },
   { href: "/admin/users", label: "Admin: Users", icon: ShieldCheck },
 ];
 
