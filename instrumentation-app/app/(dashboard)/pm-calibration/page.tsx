@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { PlusCircle, CalendarCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentUserRole, canManage } from "@/lib/utils/role";
 import { Card, Badge } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 
 export default async function PMCalibrationPage() {
   const supabase = createClient();
+  const role = await getCurrentUserRole();
   const { data: pmSchedules } = await supabase
     .from("pm_schedules")
     .select("id, task_name, next_due, equipment_id, equipment(tag_number, name)")
@@ -23,12 +25,14 @@ export default async function PMCalibrationPage() {
             <p className="text-sm text-gray-500">Schedules, due dates, and overdue items</p>
           </div>
         </div>
-        <Link href="/pm-calibration/new">
-          <Button className="gap-1.5">
-            <PlusCircle className="h-4 w-4" />
-            Add Schedule
-          </Button>
-        </Link>
+        {canManage(role) && (
+          <Link href="/pm-calibration/new">
+            <Button className="gap-1.5">
+              <PlusCircle className="h-4 w-4" />
+              Add Schedule
+            </Button>
+          </Link>
+        )}
       </div>
 
       <Card className="overflow-x-auto p-0">
