@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertTriangle, CheckCircle2, ClipboardList, ListChecks } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ClipboardList, ListChecks, ImageOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { Card, Badge } from "@/components/ui/Card";
@@ -16,6 +16,25 @@ export default async function DashboardPage() {
   const active = (breakdowns ?? []).filter((b) => b.status !== "closed");
   const critical = active.filter((b) => b.priority === "critical");
   const completed = (breakdowns ?? []).filter((b) => b.status === "closed");
+
+  // Fetch one photo per breakdown (the most recent) to show as a thumbnail.
+  const breakdownIds = (breakdowns ?? []).map((b) => b.id);
+  const photoByBreakdown = new Map<string, string>();
+
+  if (breakdownIds.length > 0) {
+    const { data: photos } = await supabase
+      .from("breakdown_photos")
+      .select("breakdown_id, storage_path, created_at")
+      .in("breakdown_id", breakdownIds)
+      .order("created_at", { ascending: false });
+
+    for (const p of photos ?? []) {
+      if (!photoByBreakdown.has(p.breakdown_id)) {
+        const url = supabase.storage.from("breakdown-photos").getPublicUrl(p.storage_path).data.publicUrl;
+        photoByBreakdown.set(p.breakdown_id, url);
+      }
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -36,7 +55,7 @@ export default async function DashboardPage() {
         <StatCard label="Total Logged" value={breakdowns?.length ?? 0} icon={ListChecks} />
       </div>
 
-      <Card className="overflow-x-auto">
+      <Card>
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-gray-900">Recent Breakdowns</h2>
           <Link href="/breakdowns" className="text-sm text-brand-600 hover:underline">
@@ -47,34 +66,39 @@ export default async function DashboardPage() {
         {!breakdowns || breakdowns.length === 0 ? (
           <p className="py-8 text-center text-sm text-gray-400">No breakdowns logged yet.</p>
         ) : (
-          <table className="w-full min-w-[480px] text-sm">
-            <thead>
-              <tr className="border-b border-gray-100 text-left text-xs uppercase text-gray-400">
-                <th className="pb-2">Description</th>
-                <th className="pb-2">Priority</th>
-                <th className="pb-2">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {breakdowns.map((b) => (
-                <tr key={b.id} className="border-b border-gray-50 transition-colors last:border-0 hover:bg-gray-50/60">
-                  <td className="py-2">
-                    <Link href={`/breakdowns/${b.id}`} className="font-medium text-gray-900 hover:text-brand-600 hover:underline">
-                      {b.fault_description}
-                    </Link>
-                  </td>
-                  <td className="py-2">
-                    <Badge tone={b.priority === "critical" ? "red" : b.priority === "high" ? "amber" : "gray"}>
-                      {b.priority}
-                    </Badge>
-                  </td>
-                  <td className="py-2">
-                    <Badge tone="blue">{b.status}</Badge>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="divide-y divide-gray-50">
+            {breakdowns.map((b) => {
+              const photoUrl = photoByBreakdown.get(b.id);
+              return (
+                <Link
+                  key={b.id}
+                  href={`/breakdowns/${b.id}`}
+                  className="flex items-center gap-3 py-3 transition-colors hover:bg-gray-50/60"
+                >
+                  <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+                    {photoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={photoUrl} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-gray-300">
+                        <ImageOff className="h-5 w-5" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-gray-900">{b.fault_description}</p>
+                    <div className="mt-1 flex flex-wrap gap-1.5">
+                      <Badge tone={b.priority === "critical" ? "red" : b.priority === "high" ? "amber" : "gray"}>
+                        {b.priority}
+                      </Badge>
+                      <Badge tone="blue">{b.status}</Badge>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
         )}
       </Card>
     </div>
