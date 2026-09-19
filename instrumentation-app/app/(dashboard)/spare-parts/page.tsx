@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { PlusCircle, Package } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentUserRole, canManage } from "@/lib/utils/role";
 import { Card, Badge } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 
 export default async function SparePartsPage() {
   const supabase = createClient();
+  const role = await getCurrentUserRole();
   const { data: parts } = await supabase
     .from("spare_parts")
     .select("id, part_number, name, stock_qty, min_stock_qty")
@@ -21,12 +23,14 @@ export default async function SparePartsPage() {
             <p className="text-sm text-gray-500">Inventory levels and low-stock alerts</p>
           </div>
         </div>
-        <Link href="/spare-parts/new">
-          <Button className="gap-1.5">
-            <PlusCircle className="h-4 w-4" />
-            Add Part
-          </Button>
-        </Link>
+        {canManage(role) && (
+          <Link href="/spare-parts/new">
+            <Button className="gap-1.5">
+              <PlusCircle className="h-4 w-4" />
+              Add Part
+            </Button>
+          </Link>
+        )}
       </div>
 
       <Card className="overflow-x-auto p-0">
