@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 
 const SYSTEM_PROMPT = `You are a troubleshooting assistant for an instrumentation department in a cement plant.
 A technician will describe a symptom. Respond with:
@@ -10,7 +11,8 @@ A technician will describe a symptom. Respond with:
 6. Possible corrective actions
 
 Rules: Never claim a fault is confirmed. Never invent measurements, findings, or completed work.
-Always frame output as suggestions for the technician to verify, not conclusions.`;
+Always frame output as suggestions for the technician to verify, not conclusions.
+If similar past cases are provided below, reference them briefly where relevant, but still verify independently.`;
 
 export async function POST(req: NextRequest) {
   const { problem } = await req.json();
@@ -27,6 +29,33 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Pull similar past cases from the knowledge base (simple keyword search) to ground the suggestion.
+  let similarCasesText = "";
+  try {
+    const supabase = createClient();
+    const keywords = problem
+      .split(/\s+/)
+      .filter((w: string) => w.length > 3)
+      .slice(0, 5);
+
+    if (keywords.length > 0) {
+      const orFilter = keywords.map((k: string) => `problem_summary.ilike.%${k}%`).join(",");
+      const { data: cases } = await supabase
+        .from("ai_knowledge_cases")
+        .select("problem_summary, solution_summary")
+        .or(orFilter)
+        .limit(3);
+
+      if (cases && cases.length > 0) {
+        similarCasesText =
+          "\n\nSimilar past cases from this department's history:\n" +
+          cases.map((c, i) => `${i + 1}. Problem: ${c.problem_summary}\n   Resolution: ${c.solution_summary}`).join("\n");
+      }
+    }
+  } catch {
+    // If the knowledge base lookup fails for any reason, proceed without it.
+  }
+
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -37,7 +66,7 @@ export async function POST(req: NextRequest) {
       model: "openai/gpt-oss-120b",
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: problem },
+        { role: "user", content: problem + similarCasesText },
       ],
       max_tokens: 700,
     }),
