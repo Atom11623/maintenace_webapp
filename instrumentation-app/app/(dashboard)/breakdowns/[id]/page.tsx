@@ -6,6 +6,7 @@ import { Card, Badge } from "@/components/ui/Card";
 import { BreakdownEditor } from "./BreakdownEditor";
 import { QuickStatusActions } from "../QuickStatusActions";
 import { CommentThread, type CommentWithAuthor } from "@/components/shared/CommentThread";
+import { PhotoUpload, type PhotoWithUrl } from "./PhotoUpload";
 
 export default async function BreakdownDetailPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
@@ -34,6 +35,17 @@ export default async function BreakdownDetailPage({ params }: { params: { id: st
     body: c.body,
     created_at: c.created_at,
     author_name: c.profiles?.full_name ?? "Unknown",
+  }));
+
+  const { data: rawPhotos } = await supabase
+    .from("breakdown_photos")
+    .select("id, storage_path")
+    .eq("breakdown_id", params.id)
+    .order("created_at", { ascending: true });
+
+  const photos: PhotoWithUrl[] = (rawPhotos ?? []).map((p) => ({
+    id: p.id,
+    url: supabase.storage.from("breakdown-photos").getPublicUrl(p.storage_path).data.publicUrl,
   }));
 
   return (
@@ -86,6 +98,10 @@ export default async function BreakdownDetailPage({ params }: { params: { id: st
       </Card>
 
       <BreakdownEditor breakdown={breakdown} />
+
+      <Card>
+        <PhotoUpload breakdownId={breakdown.id} photos={photos} />
+      </Card>
 
       <Card>
         <CommentThread entityType="breakdown" entityId={breakdown.id} comments={comments} />
