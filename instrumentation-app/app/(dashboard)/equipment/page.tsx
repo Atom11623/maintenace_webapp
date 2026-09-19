@@ -1,10 +1,13 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentUserRole, canManage } from "@/lib/utils/role";
 import { Card, Badge } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 
 export default async function EquipmentPage() {
   const supabase = createClient();
+  const role = await getCurrentUserRole();
+
   const { data: equipment } = await supabase
     .from("equipment")
     .select("id, tag_number, name, type, plant_section, status")
@@ -17,9 +20,11 @@ export default async function EquipmentPage() {
           <h1 className="text-xl font-semibold">Equipment Database</h1>
           <p className="text-sm text-gray-500">Instruments and control devices across the plant</p>
         </div>
-        <Link href="/equipment/new">
-          <Button>Add Equipment</Button>
-        </Link>
+        {canManage(role) && (
+          <Link href="/equipment/new">
+            <Button>Add Equipment</Button>
+          </Link>
+        )}
       </div>
 
       <Card className="p-0">
