@@ -84,7 +84,6 @@ export function PhotoUpload({ breakdownId, photos }: { breakdownId: string; phot
           ref={fileInput}
           type="file"
           accept="image/*"
-          capture="environment"
           onChange={handleFileChange}
           className="hidden"
           id="photo-upload-input"
