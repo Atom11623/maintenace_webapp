@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { PlusCircle, Package } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentUserRole, canManage } from "@/lib/utils/role";
+import { getCurrentUserRole, canManage, isAdmin } from "@/lib/utils/role";
 import { Card, Badge } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { DeleteButton } from "@/components/shared/DeleteButton";
 
 export default async function SparePartsPage() {
   const supabase = createClient();
@@ -44,6 +45,7 @@ export default async function SparePartsPage() {
                 <th className="p-3">Name</th>
                 <th className="p-3">Stock</th>
                 <th className="p-3">Status</th>
+                {isAdmin(role) && <th className="p-3"></th>}
               </tr>
             </thead>
             <tbody>
@@ -57,6 +59,11 @@ export default async function SparePartsPage() {
                     <td className="p-3">
                       <Badge tone={low ? "red" : "green"}>{low ? "Low stock" : "OK"}</Badge>
                     </td>
+                    {isAdmin(role) && (
+                      <td className="p-3">
+                        <DeleteButton table="spare_parts" id={p.id} label="Delete" />
+                      </td>
+                    )}
                   </tr>
                 );
               })}
