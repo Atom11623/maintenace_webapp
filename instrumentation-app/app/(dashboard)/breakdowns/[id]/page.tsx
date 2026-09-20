@@ -7,9 +7,12 @@ import { BreakdownEditor } from "./BreakdownEditor";
 import { QuickStatusActions } from "../QuickStatusActions";
 import { CommentThread, type CommentWithAuthor } from "@/components/shared/CommentThread";
 import { PhotoUpload, type PhotoWithUrl } from "./PhotoUpload";
+import { DeleteButton } from "@/components/shared/DeleteButton";
+import { getCurrentUserRole, isAdmin } from "@/lib/utils/role";
 
 export default async function BreakdownDetailPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
+  const role = await getCurrentUserRole();
 
   const { data: breakdown } = await supabase
     .from("breakdowns")
@@ -68,6 +71,18 @@ export default async function BreakdownDetailPage({ params }: { params: { id: st
           {breakdown.priority} priority
         </Badge>
       </div>
+
+      {isAdmin(role) && (
+        <div className="flex justify-end">
+          <DeleteButton
+            table="breakdowns"
+            id={breakdown.id}
+            label="Delete this breakdown"
+            confirmText="Delete this breakdown record permanently?"
+            redirectTo="/breakdowns"
+          />
+        </div>
+      )}
 
       <Card>
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Quick status</p>
