@@ -13,6 +13,8 @@ export default function NewPMSchedulePage() {
   const [equipmentList, setEquipmentList] = useState<Equipment[]>([]);
   const [form, setForm] = useState({
     equipment_id: "",
+    equipment_description: "",
+    location: "",
     task_name: "",
     frequency_days: "30",
     next_due: new Date().toISOString().slice(0, 10),
@@ -33,14 +35,16 @@ export default function NewPMSchedulePage() {
     setLoading(true);
     setError(null);
 
-    if (!form.equipment_id) {
-      setError("Select equipment.");
+    if (!form.equipment_id && !form.equipment_description.trim()) {
+      setError("Either select equipment from the list, or describe it manually.");
       setLoading(false);
       return;
     }
 
     const { error } = await supabase.from("pm_schedules").insert({
-      equipment_id: form.equipment_id,
+      equipment_id: form.equipment_id || null,
+      equipment_description: form.equipment_description || null,
+      location: form.location || null,
       task_name: form.task_name,
       frequency_days: Number(form.frequency_days),
       next_due: form.next_due,
@@ -61,20 +65,51 @@ export default function NewPMSchedulePage() {
       <Card>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Equipment *</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Equipment (select if registered)
+            </label>
             <select
-              required
               className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
               value={form.equipment_id}
               onChange={(e) => setForm({ ...form, equipment_id: e.target.value })}
             >
-              <option value="">-- Select equipment --</option>
+              <option value="">-- Not registered / describe manually below --</option>
               {equipmentList.map((eq) => (
                 <option key={eq.id} value={eq.id}>
                   {eq.tag_number} — {eq.name}
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="rounded-md border border-dashed border-gray-300 p-3">
+            <p className="mb-2 text-xs font-medium text-gray-500">
+              Or describe it manually (use this if the equipment isn't in the database yet)
+            </p>
+            <div className="space-y-3">
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  Equipment description
+                </label>
+                <input
+                  placeholder="e.g. Belt scale, Packer 2 feed conveyor"
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                  value={form.equipment_description}
+                  onChange={(e) => setForm({ ...form, equipment_description: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  Production line / Location
+                </label>
+                <input
+                  placeholder="e.g. Production Line 2, Packing Section"
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                  value={form.location}
+                  onChange={(e) => setForm({ ...form, location: e.target.value })}
+                />
+              </div>
+            </div>
           </div>
 
           <div>
