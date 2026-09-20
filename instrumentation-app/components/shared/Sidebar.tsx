@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
 import clsx from "clsx";
 import {
   LayoutDashboard,
@@ -16,6 +17,8 @@ import {
   ShieldCheck,
   LogOut,
   X,
+  Info,
+  AlertTriangle,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -35,21 +38,30 @@ const NAV_ITEMS = [
 export function Sidebar({
   userName,
   role,
+  userEmail,
+  userId,
+  debugError,
   onNavigate,
 }: {
   userName: string;
   role: string;
+  userEmail: string;
+  userId: string;
+  debugError: string | null;
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
+  const [showDebug, setShowDebug] = useState(false);
 
   async function handleLogout() {
     await supabase.auth.signOut();
     router.push("/login");
     router.refresh();
   }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "not set";
 
   return (
     <div className="flex h-full flex-col bg-white">
@@ -68,6 +80,13 @@ export function Sidebar({
           <X className="h-5 w-5" />
         </button>
       </div>
+
+      {debugError && (
+        <div className="flex items-start gap-1.5 border-b border-red-100 bg-red-50 p-2.5 text-[10px] leading-snug text-red-700">
+          <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
+          <span className="break-all">Role lookup failed: {debugError}</span>
+        </div>
+      )}
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto p-3">
         {NAV_ITEMS.map((item) => {
@@ -91,6 +110,36 @@ export function Sidebar({
       </nav>
 
       <div className="border-t border-gray-100 p-3">
+        <button
+          onClick={() => setShowDebug((v) => !v)}
+          className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-xs font-medium text-gray-400 hover:bg-gray-50"
+        >
+          <Info className="h-3.5 w-3.5" />
+          Account & connection info
+        </button>
+
+        {showDebug && (
+          <div className="mb-2 space-y-1 rounded-md bg-gray-50 p-2.5 text-[10px] leading-relaxed text-gray-500">
+            <p>
+              <span className="font-semibold text-gray-600">Email:</span> {userEmail}
+            </p>
+            <p className="break-all">
+              <span className="font-semibold text-gray-600">User ID:</span> {userId}
+            </p>
+            <p>
+              <span className="font-semibold text-gray-600">Role:</span> {role}
+            </p>
+            <p className="break-all">
+              <span className="font-semibold text-gray-600">Supabase URL:</span> {supabaseUrl}
+            </p>
+            {debugError && (
+              <p className="break-all text-red-600">
+                <span className="font-semibold">Error:</span> {debugError}
+              </p>
+            )}
+          </div>
+        )}
+
         <button
           onClick={handleLogout}
           className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm font-medium text-gray-600 hover:bg-gray-50"
