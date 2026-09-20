@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentUserRole, canManage } from "@/lib/utils/role";
+import { getCurrentUserRole, canManage, isAdmin } from "@/lib/utils/role";
 import { Card, Badge } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { DeleteButton } from "@/components/shared/DeleteButton";
 
 export default async function EquipmentPage() {
   const supabase = createClient();
@@ -39,6 +40,7 @@ export default async function EquipmentPage() {
                 <th className="p-3">Type</th>
                 <th className="p-3">Section</th>
                 <th className="p-3">Status</th>
+                {isAdmin(role) && <th className="p-3"></th>}
               </tr>
             </thead>
             <tbody>
@@ -55,6 +57,11 @@ export default async function EquipmentPage() {
                   <td className="p-3">
                     <Badge tone={eq.status === "operational" ? "green" : "amber"}>{eq.status}</Badge>
                   </td>
+                  {isAdmin(role) && (
+                    <td className="p-3">
+                      <DeleteButton table="equipment" id={eq.id} label="Delete" />
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
