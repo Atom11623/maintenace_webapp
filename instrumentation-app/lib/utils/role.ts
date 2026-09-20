@@ -18,3 +18,7 @@ export async function getCurrentUserRole(): Promise<UserRole | null> {
 export function canManage(role: UserRole | null): boolean {
   return role === "admin" || role === "engineer";
 }
+
+export function isAdmin(role: UserRole | null): boolean {
+  return role === "admin";
+}
