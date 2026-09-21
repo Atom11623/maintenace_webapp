@@ -21,6 +21,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { InstallAppButton } from "./InstallAppButton";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -110,6 +111,10 @@ export function Sidebar({
       </nav>
 
       <div className="border-t border-gray-100 p-3">
+        <div className="mb-2">
+          <InstallAppButton />
+        </div>
+
         <button
           onClick={() => setShowDebug((v) => !v)}
           className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-xs font-medium text-gray-400 hover:bg-gray-50"
