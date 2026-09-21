@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import type { Equipment } from "@/types/database";
+import { PLANT_LOCATIONS } from "@/lib/constants";
 
 export default function NewPMSchedulePage() {
   const router = useRouter();
@@ -14,7 +15,7 @@ export default function NewPMSchedulePage() {
   const [form, setForm] = useState({
     equipment_id: "",
     equipment_description: "",
-    location: "",
+    location: PLANT_LOCATIONS[0] as string,
     task_name: "",
     frequency_days: "30",
     next_due: new Date().toISOString().slice(0, 10),
@@ -82,33 +83,36 @@ export default function NewPMSchedulePage() {
             </select>
           </div>
 
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Location *</label>
+            <select
+              required
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              value={form.location}
+              onChange={(e) => setForm({ ...form, location: e.target.value })}
+            >
+              {PLANT_LOCATIONS.map((loc) => (
+                <option key={loc} value={loc}>
+                  {loc}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div className="rounded-md border border-dashed border-gray-300 p-3">
             <p className="mb-2 text-xs font-medium text-gray-500">
-              Or describe it manually (use this if the equipment isn't in the database yet)
+              Describe the equipment manually (use this if it isn't in the database yet)
             </p>
-            <div className="space-y-3">
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
-                  Equipment description
-                </label>
-                <input
-                  placeholder="e.g. Belt scale, Packer 2 feed conveyor"
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-                  value={form.equipment_description}
-                  onChange={(e) => setForm({ ...form, equipment_description: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
-                  Production line / Location
-                </label>
-                <input
-                  placeholder="e.g. Production Line 2, Packing Section"
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-                  value={form.location}
-                  onChange={(e) => setForm({ ...form, location: e.target.value })}
-                />
-              </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700">
+                Equipment description
+              </label>
+              <input
+                placeholder="e.g. Belt scale, Packer 2 feed conveyor"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                value={form.equipment_description}
+                onChange={(e) => setForm({ ...form, equipment_description: e.target.value })}
+              />
             </div>
           </div>
 
