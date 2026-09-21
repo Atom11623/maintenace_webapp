@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { AlertTriangle, CheckCircle2, ClipboardList, ListChecks, ImageOff } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ClipboardList, ListChecks, ImageOff, MapPin } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { Card, Badge } from "@/components/ui/Card";
+import { PLANT_LOCATIONS } from "@/lib/constants";
 
 export default async function DashboardPage() {
   const supabase = createClient();
@@ -16,6 +17,23 @@ export default async function DashboardPage() {
   const active = (breakdowns ?? []).filter((b) => b.status !== "closed");
   const critical = active.filter((b) => b.priority === "critical");
   const completed = (breakdowns ?? []).filter((b) => b.status === "closed");
+
+  // Count ALL active breakdowns by location (not just the recent 8 above), so the
+  // department can see at a glance which line has the most open problems.
+  const { data: activeByLocation } = await supabase
+    .from("breakdowns")
+    .select("location, priority")
+    .neq("status", "closed");
+
+  const locationCounts = new Map<string, { total: number; critical: number }>();
+  for (const loc of PLANT_LOCATIONS) locationCounts.set(loc, { total: 0, critical: 0 });
+  for (const b of activeByLocation ?? []) {
+    const key = b.location ?? "Unspecified";
+    const entry = locationCounts.get(key) ?? { total: 0, critical: 0 };
+    entry.total += 1;
+    if (b.priority === "critical") entry.critical += 1;
+    locationCounts.set(key, entry);
+  }
 
   // Fetch one photo per breakdown (the most recent) to show as a thumbnail.
   const breakdownIds = (breakdowns ?? []).map((b) => b.id);
@@ -54,6 +72,30 @@ export default async function DashboardPage() {
         <StatCard label="Completed (recent)" value={completed.length} icon={CheckCircle2} />
         <StatCard label="Total Logged" value={breakdowns?.length ?? 0} icon={ListChecks} />
       </div>
+
+      <Card>
+        <div className="mb-3 flex items-center gap-2">
+          <MapPin className="h-4 w-4 text-brand-600" />
+          <h2 className="text-sm font-semibold text-gray-900">Active Breakdowns by Line</h2>
+        </div>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+          {Array.from(locationCounts.entries()).map(([loc, counts]) => (
+            <Link
+              key={loc}
+              href={`/breakdowns?location=${encodeURIComponent(loc)}`}
+              className="rounded-lg border border-gray-100 p-3 text-center transition-colors hover:border-brand-200 hover:bg-brand-50/40"
+            >
+              <p className="text-xs font-medium text-gray-500">{loc}</p>
+              <p className={`mt-1 text-xl font-semibold ${counts.critical > 0 ? "text-red-600" : "text-gray-900"}`}>
+                {counts.total}
+              </p>
+              {counts.critical > 0 && (
+                <p className="mt-0.5 text-[10px] font-medium text-red-500">{counts.critical} critical</p>
+              )}
+            </Link>
+          ))}
+        </div>
+      </Card>
 
       <Card>
         <div className="mb-3 flex items-center justify-between">
