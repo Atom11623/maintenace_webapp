@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { InstallAppButton } from "@/components/shared/InstallAppButton";
 
 export const dynamic = "force-dynamic";
 
@@ -68,9 +69,12 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        <p className="mt-6 text-xs text-gray-400">
-          Accounts are created by an administrator. Contact your admin for access.
-        </p>
+        <div className="mt-6 flex items-center justify-between border-t border-gray-100 pt-4">
+          <p className="text-xs text-gray-400">
+            Accounts are created by an administrator.
+          </p>
+          <InstallAppButton />
+        </div>
       </Card>
     </div>
   );
