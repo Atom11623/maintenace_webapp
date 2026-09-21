@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import type { Equipment } from "@/types/database";
+import { PLANT_LOCATIONS } from "@/lib/constants";
 
 export default function NewBreakdownPage() {
   const router = useRouter();
@@ -14,7 +15,7 @@ export default function NewBreakdownPage() {
   const [equipmentList, setEquipmentList] = useState<Equipment[]>([]);
   const [form, setForm] = useState({
     equipment_id: "",
-    location: "",
+    location: PLANT_LOCATIONS[0] as string,
     fault_description: "",
     alarm_code: "",
     priority: "medium",
@@ -91,12 +92,19 @@ export default function NewBreakdownPage() {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Location / Plant Section</label>
-            <input
+            <label className="mb-1 block text-sm font-medium text-gray-700">Location *</label>
+            <select
+              required
               className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
               value={form.location}
               onChange={(e) => setForm({ ...form, location: e.target.value })}
-            />
+            >
+              {PLANT_LOCATIONS.map((loc) => (
+                <option key={loc} value={loc}>
+                  {loc}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
