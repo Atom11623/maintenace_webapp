@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertTriangle, CheckCircle2, ClipboardList, ListChecks, ImageOff, MapPin } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ClipboardList, ListChecks, ImageOff, MapPin, ClipboardCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { Card, Badge } from "@/components/ui/Card";
@@ -7,6 +7,19 @@ import { PLANT_LOCATIONS } from "@/lib/constants";
 
 export default async function DashboardPage() {
   const supabase = createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { data: myTasks } = user
+    ? await supabase
+        .from("breakdowns")
+        .select("id, fault_description, priority, status, location, assignment_note")
+        .eq("assigned_to", user.id)
+        .neq("status", "closed")
+        .order("created_at", { ascending: false })
+    : { data: [] };
 
   const { data: breakdowns } = await supabase
     .from("breakdowns")
@@ -18,8 +31,6 @@ export default async function DashboardPage() {
   const critical = active.filter((b) => b.priority === "critical");
   const completed = (breakdowns ?? []).filter((b) => b.status === "closed");
 
-  // Count ALL active breakdowns by location (not just the recent 8 above), so the
-  // department can see at a glance which line has the most open problems.
   const { data: activeByLocation } = await supabase
     .from("breakdowns")
     .select("location, priority")
@@ -35,7 +46,6 @@ export default async function DashboardPage() {
     locationCounts.set(key, entry);
   }
 
-  // Fetch one photo per breakdown (the most recent) to show as a thumbnail.
   const breakdownIds = (breakdowns ?? []).map((b) => b.id);
   const photoByBreakdown = new Map<string, string>();
 
@@ -60,6 +70,35 @@ export default async function DashboardPage() {
         <h1 className="text-xl font-semibold">Department Dashboard</h1>
         <p className="mt-1 text-sm text-blue-100">Live overview of instrumentation department activity</p>
       </div>
+
+      {myTasks && myTasks.length > 0 && (
+        <Card className="border-amber-200 bg-amber-50/60">
+          <div className="mb-3 flex items-center gap-2">
+            <ClipboardCheck className="h-4 w-4 text-amber-700" />
+            <h2 className="text-sm font-semibold text-amber-900">Assigned to You ({myTasks.length})</h2>
+          </div>
+          <div className="space-y-2">
+            {myTasks.map((t) => (
+              <Link
+                key={t.id}
+                href={`/breakdowns/${t.id}`}
+                className="block rounded-lg border border-amber-200 bg-white p-3 transition-colors hover:border-amber-400"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-medium text-gray-900">{t.fault_description}</p>
+                  <Badge tone={t.priority === "critical" ? "red" : t.priority === "high" ? "amber" : "gray"}>
+                    {t.priority}
+                  </Badge>
+                </div>
+                <p className="mt-0.5 text-xs text-gray-500">{t.location}</p>
+                {t.assignment_note && (
+                  <p className="mt-1 text-xs italic text-gray-600">"{t.assignment_note}"</p>
+                )}
+              </Link>
+            ))}
+          </div>
+        </Card>
+      )}
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <StatCard label="Active Breakdowns" value={active.length} icon={ClipboardList} />
