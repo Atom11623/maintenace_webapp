@@ -8,17 +8,24 @@ import { Button } from "@/components/ui/Button";
 import type { Equipment } from "@/types/database";
 import { PLANT_LOCATIONS } from "@/lib/constants";
 
+interface StaffOption {
+  id: string;
+  full_name: string;
+}
+
 export default function NewBreakdownPage() {
   const router = useRouter();
   const supabase = createClient();
 
   const [equipmentList, setEquipmentList] = useState<Equipment[]>([]);
+  const [staffList, setStaffList] = useState<StaffOption[]>([]);
   const [form, setForm] = useState({
     equipment_id: "",
     location: PLANT_LOCATIONS[0] as string,
     fault_description: "",
     alarm_code: "",
     priority: "medium",
+    assigned_to: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,6 +36,12 @@ export default function NewBreakdownPage() {
       .select("*")
       .order("tag_number")
       .then(({ data }) => setEquipmentList((data as Equipment[]) ?? []));
+
+    supabase
+      .from("profiles")
+      .select("id, full_name")
+      .order("full_name")
+      .then(({ data }) => setStaffList((data as StaffOption[]) ?? []));
   }, [supabase]);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -54,8 +67,9 @@ export default function NewBreakdownPage() {
         fault_description: form.fault_description,
         alarm_code: form.alarm_code || null,
         priority: form.priority,
+        assigned_to: form.assigned_to || null,
+        status: form.assigned_to ? "assigned" : "reported",
         reported_by: user.id,
-        status: "reported",
       })
       .select("id")
       .single();
@@ -105,6 +119,27 @@ export default function NewBreakdownPage() {
                 </option>
               ))}
             </select>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Assign to Shift Personnel
+            </label>
+            <select
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              value={form.assigned_to}
+              onChange={(e) => setForm({ ...form, assigned_to: e.target.value })}
+            >
+              <option value="">-- Unassigned for now --</option>
+              {staffList.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.full_name}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-gray-400">
+              Who's doing (or will do) this work — leave blank to assign later.
+            </p>
           </div>
 
           <div>
