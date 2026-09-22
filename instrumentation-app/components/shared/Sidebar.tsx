@@ -19,6 +19,9 @@ import {
   X,
   Info,
   AlertTriangle,
+  UserCircle,
+  Megaphone,
+  CalendarDays,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { InstallAppButton } from "./InstallAppButton";
@@ -27,12 +30,15 @@ const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/breakdowns", label: "Breakdowns", icon: Wrench },
   { href: "/handover", label: "Shift Handover", icon: Repeat },
+  { href: "/shift-roster", label: "Shift Roster", icon: CalendarDays },
+  { href: "/announcements", label: "Announcements", icon: Megaphone },
   { href: "/equipment", label: "Equipment", icon: Cpu },
   { href: "/pm-calibration", label: "PM & Calibration", icon: CalendarCheck },
   { href: "/spare-parts", label: "Spare Parts", icon: Package },
   { href: "/reports", label: "Reports", icon: FileText },
   { href: "/ai-assistant", label: "AI Assistant", icon: Bot },
   { href: "/knowledge-base", label: "Knowledge Base", icon: BookOpen },
+  { href: "/profile", label: "My Profile", icon: UserCircle },
   { href: "/admin/users", label: "Admin: Users", icon: ShieldCheck },
 ];
 
