@@ -21,6 +21,7 @@ const STATUS_FLOW: BreakdownStatus[] = [
 interface StaffOption {
   id: string;
   full_name: string;
+  sap_number: string | null;
 }
 
 export function BreakdownEditor({ breakdown }: { breakdown: Breakdown }) {
@@ -32,6 +33,7 @@ export function BreakdownEditor({ breakdown }: { breakdown: Breakdown }) {
   const [rootCause, setRootCause] = useState(breakdown.root_cause ?? "");
   const [correctiveAction, setCorrectiveAction] = useState(breakdown.corrective_action ?? "");
   const [assignedTo, setAssignedTo] = useState((breakdown as any).assigned_to ?? "");
+  const [assignmentNote, setAssignmentNote] = useState((breakdown as any).assignment_note ?? "");
   const [staffList, setStaffList] = useState<StaffOption[]>([]);
   const [saving, setSaving] = useState(false);
   const [savingCase, setSavingCase] = useState(false);
@@ -40,7 +42,7 @@ export function BreakdownEditor({ breakdown }: { breakdown: Breakdown }) {
   useEffect(() => {
     supabase
       .from("profiles")
-      .select("id, full_name")
+      .select("id, full_name, sap_number")
       .order("full_name")
       .then(({ data }) => setStaffList((data as StaffOption[]) ?? []));
   }, [supabase]);
@@ -57,6 +59,7 @@ export function BreakdownEditor({ breakdown }: { breakdown: Breakdown }) {
         root_cause: rootCause,
         corrective_action: correctiveAction,
         assigned_to: assignedTo || null,
+        assignment_note: assignmentNote || null,
         ...(isClosing && !breakdown.end_time ? { end_time: new Date().toISOString() } : {}),
       })
       .eq("id", breakdown.id);
@@ -85,21 +88,34 @@ export function BreakdownEditor({ breakdown }: { breakdown: Breakdown }) {
     <Card className="space-y-4">
       <h2 className="text-sm font-semibold">Work Order Details</h2>
 
-      <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700">Assigned to</label>
-        <select
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-          value={assignedTo}
-          onChange={(e) => setAssignedTo(e.target.value)}
-        >
-          <option value="">-- Unassigned --</option>
-          {staffList.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.full_name}
-            </option>
-          ))}
-        </select>
-        <p className="mt-1 text-xs text-gray-400">Who's doing this work — for tracing and accountability.</p>
+      <div className="rounded-md border border-dashed border-gray-300 p-3 space-y-3">
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700">Assigned to</label>
+          <select
+            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+            value={assignedTo}
+            onChange={(e) => setAssignedTo(e.target.value)}
+          >
+            <option value="">-- Unassigned --</option>
+            {staffList.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.full_name}
+                {s.sap_number ? ` — SAP ${s.sap_number}` : ""}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-gray-400">Who's doing this work — for tracing and accountability.</p>
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700">Task Note</label>
+          <textarea
+            rows={2}
+            placeholder="Any specific instructions for the assignee..."
+            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+            value={assignmentNote}
+            onChange={(e) => setAssignmentNote(e.target.value)}
+          />
+        </div>
       </div>
 
       <div>
