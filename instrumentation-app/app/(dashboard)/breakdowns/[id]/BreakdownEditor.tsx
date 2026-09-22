@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BookmarkPlus, Check } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -18,6 +18,11 @@ const STATUS_FLOW: BreakdownStatus[] = [
   "closed",
 ];
 
+interface StaffOption {
+  id: string;
+  full_name: string;
+}
+
 export function BreakdownEditor({ breakdown }: { breakdown: Breakdown }) {
   const router = useRouter();
   const supabase = createClient();
@@ -26,9 +31,19 @@ export function BreakdownEditor({ breakdown }: { breakdown: Breakdown }) {
   const [findings, setFindings] = useState(breakdown.findings ?? "");
   const [rootCause, setRootCause] = useState(breakdown.root_cause ?? "");
   const [correctiveAction, setCorrectiveAction] = useState(breakdown.corrective_action ?? "");
+  const [assignedTo, setAssignedTo] = useState((breakdown as any).assigned_to ?? "");
+  const [staffList, setStaffList] = useState<StaffOption[]>([]);
   const [saving, setSaving] = useState(false);
   const [savingCase, setSavingCase] = useState(false);
   const [caseSaved, setCaseSaved] = useState(false);
+
+  useEffect(() => {
+    supabase
+      .from("profiles")
+      .select("id, full_name")
+      .order("full_name")
+      .then(({ data }) => setStaffList((data as StaffOption[]) ?? []));
+  }, [supabase]);
 
   async function handleSave() {
     setSaving(true);
@@ -41,6 +56,7 @@ export function BreakdownEditor({ breakdown }: { breakdown: Breakdown }) {
         findings,
         root_cause: rootCause,
         corrective_action: correctiveAction,
+        assigned_to: assignedTo || null,
         ...(isClosing && !breakdown.end_time ? { end_time: new Date().toISOString() } : {}),
       })
       .eq("id", breakdown.id);
@@ -68,6 +84,23 @@ export function BreakdownEditor({ breakdown }: { breakdown: Breakdown }) {
   return (
     <Card className="space-y-4">
       <h2 className="text-sm font-semibold">Work Order Details</h2>
+
+      <div>
+        <label className="mb-1 block text-sm font-medium text-gray-700">Assigned to</label>
+        <select
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+          value={assignedTo}
+          onChange={(e) => setAssignedTo(e.target.value)}
+        >
+          <option value="">-- Unassigned --</option>
+          {staffList.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.full_name}
+            </option>
+          ))}
+        </select>
+        <p className="mt-1 text-xs text-gray-400">Who's doing this work — for tracing and accountability.</p>
+      </div>
 
       <div>
         <label className="mb-1 block text-sm font-medium text-gray-700">Status</label>
