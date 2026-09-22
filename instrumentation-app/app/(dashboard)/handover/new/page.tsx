@@ -18,7 +18,7 @@ const FIELDS: { key: string; label: string; placeholder?: string }[] = [
 export default function NewHandoverPage() {
   const router = useRouter();
   const supabase = createClient();
-  const [shiftType, setShiftType] = useState("morning");
+  const [shiftType, setShiftType] = useState("General");
   const [form, setForm] = useState<Record<string, string>>({
     outstanding_breakdowns: "",
     equipment_under_observation: "",
@@ -73,9 +73,9 @@ export default function NewHandoverPage() {
               value={shiftType}
               onChange={(e) => setShiftType(e.target.value)}
             >
-              <option value="morning">Morning</option>
-              <option value="afternoon">Afternoon</option>
-              <option value="night">Night</option>
+              <option value="General">General</option>
+              <option value="Morning">Morning</option>
+              <option value="Night">Night</option>
             </select>
           </div>
 
