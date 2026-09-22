@@ -11,6 +11,7 @@ import { PLANT_LOCATIONS } from "@/lib/constants";
 interface StaffOption {
   id: string;
   full_name: string;
+  sap_number: string | null;
 }
 
 export default function NewBreakdownPage() {
@@ -26,6 +27,7 @@ export default function NewBreakdownPage() {
     alarm_code: "",
     priority: "medium",
     assigned_to: "",
+    assignment_note: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +41,7 @@ export default function NewBreakdownPage() {
 
     supabase
       .from("profiles")
-      .select("id, full_name")
+      .select("id, full_name, sap_number")
       .order("full_name")
       .then(({ data }) => setStaffList((data as StaffOption[]) ?? []));
   }, [supabase]);
@@ -68,6 +70,7 @@ export default function NewBreakdownPage() {
         alarm_code: form.alarm_code || null,
         priority: form.priority,
         assigned_to: form.assigned_to || null,
+        assignment_note: form.assignment_note || null,
         status: form.assigned_to ? "assigned" : "reported",
         reported_by: user.id,
       })
@@ -121,25 +124,39 @@ export default function NewBreakdownPage() {
             </select>
           </div>
 
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
-              Assign to Shift Personnel
-            </label>
-            <select
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-              value={form.assigned_to}
-              onChange={(e) => setForm({ ...form, assigned_to: e.target.value })}
-            >
-              <option value="">-- Unassigned for now --</option>
-              {staffList.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.full_name}
-                </option>
-              ))}
-            </select>
-            <p className="mt-1 text-xs text-gray-400">
-              Who's doing (or will do) this work — leave blank to assign later.
-            </p>
+          <div className="rounded-md border border-dashed border-gray-300 p-3 space-y-3">
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700">
+                Assign to Shift Personnel
+              </label>
+              <select
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                value={form.assigned_to}
+                onChange={(e) => setForm({ ...form, assigned_to: e.target.value })}
+              >
+                <option value="">-- Unassigned for now --</option>
+                {staffList.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.full_name}
+                    {s.sap_number ? ` — SAP ${s.sap_number}` : ""}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-gray-400">
+                Who's doing (or will do) this work — leave blank to assign later.
+              </p>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Task Note (optional)</label>
+              <textarea
+                rows={2}
+                placeholder="Any specific instructions for whoever is assigned..."
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                value={form.assignment_note}
+                onChange={(e) => setForm({ ...form, assignment_note: e.target.value })}
+              />
+            </div>
           </div>
 
           <div>
