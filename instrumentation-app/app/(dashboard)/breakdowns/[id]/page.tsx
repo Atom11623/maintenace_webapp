@@ -26,6 +26,14 @@ export default async function BreakdownDetailPage({ params }: { params: { id: st
     ? await supabase.from("equipment").select("tag_number, name").eq("id", breakdown.equipment_id).single()
     : { data: null };
 
+  const { data: assignedStaff } = breakdown.assigned_to
+    ? await supabase.from("profiles").select("full_name").eq("id", breakdown.assigned_to).single()
+    : { data: null };
+
+  const { data: reporter } = breakdown.reported_by
+    ? await supabase.from("profiles").select("full_name").eq("id", breakdown.reported_by).single()
+    : { data: null };
+
   const { data: rawComments } = await supabase
     .from("comments")
     .select("id, body, created_at, user_id, profiles(full_name)")
@@ -91,6 +99,14 @@ export default async function BreakdownDetailPage({ params }: { params: { id: st
 
       <Card>
         <dl className="grid grid-cols-2 gap-4 text-sm">
+          <div>
+            <dt className="text-gray-500">Assigned to</dt>
+            <dd className="font-medium text-gray-900">{assignedStaff?.full_name ?? "Unassigned"}</dd>
+          </div>
+          <div>
+            <dt className="text-gray-500">Reported by</dt>
+            <dd className="font-medium text-gray-900">{reporter?.full_name ?? "—"}</dd>
+          </div>
           <div>
             <dt className="text-gray-500">Alarm / Error Code</dt>
             <dd className="font-medium text-gray-900">{breakdown.alarm_code ?? "—"}</dd>
