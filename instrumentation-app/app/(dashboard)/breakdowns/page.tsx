@@ -17,7 +17,7 @@ export default async function BreakdownsPage({
 
   let query = supabase
     .from("breakdowns")
-    .select("id, fault_description, priority, status, created_at, location")
+    .select("id, fault_description, priority, status, created_at, location, assigned_to, profiles(full_name)")
     .order("created_at", { ascending: false });
 
   if (activeLocation) {
@@ -77,18 +77,19 @@ export default async function BreakdownsPage({
             </p>
           </div>
         ) : (
-          <table className="w-full min-w-[640px] text-sm">
+          <table className="w-full min-w-[740px] text-sm">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                 <th className="p-3">Description</th>
                 <th className="p-3">Location</th>
+                <th className="p-3">Assigned To</th>
                 <th className="p-3">Priority</th>
                 <th className="p-3">Work Status</th>
                 <th className="p-3">Reported</th>
               </tr>
             </thead>
             <tbody>
-              {breakdowns.map((b) => (
+              {breakdowns.map((b: any) => (
                 <tr key={b.id} className="border-b border-gray-50 transition-colors last:border-0 hover:bg-gray-50/60">
                   <td className="p-3">
                     <Link href={`/breakdowns/${b.id}`} className="font-medium text-gray-900 hover:text-brand-600 hover:underline">
@@ -96,6 +97,7 @@ export default async function BreakdownsPage({
                     </Link>
                   </td>
                   <td className="p-3 text-gray-500">{b.location ?? "—"}</td>
+                  <td className="p-3 text-gray-500">{b.profiles?.full_name ?? "Unassigned"}</td>
                   <td className="p-3">
                     <Badge tone={b.priority === "critical" ? "red" : b.priority === "high" ? "amber" : "gray"}>
                       {b.priority}
