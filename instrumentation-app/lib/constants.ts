@@ -6,3 +6,7 @@ export const PLANT_LOCATIONS = [
 ] as const;
 
 export type PlantLocation = (typeof PLANT_LOCATIONS)[number];
+
+export const SHIFT_TYPES = ["General", "Morning", "Night"] as const;
+
+export type ShiftType = (typeof SHIFT_TYPES)[number];
