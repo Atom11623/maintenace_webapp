@@ -6,9 +6,10 @@ import { Card, Badge } from "@/components/ui/Card";
 import { BreakdownEditor } from "./BreakdownEditor";
 import { QuickStatusActions } from "../QuickStatusActions";
 import { CommentThread, type CommentWithAuthor } from "@/components/shared/CommentThread";
+import { ReviewCommentThread } from "./ReviewCommentThread";
 import { PhotoUpload, type PhotoWithUrl } from "./PhotoUpload";
 import { DeleteButton } from "@/components/shared/DeleteButton";
-import { getCurrentUserRole, isAdmin } from "@/lib/utils/role";
+import { getCurrentUserRole, isAdmin, canManage } from "@/lib/utils/role";
 
 export default async function BreakdownDetailPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
@@ -27,7 +28,7 @@ export default async function BreakdownDetailPage({ params }: { params: { id: st
     : { data: null };
 
   const { data: assignedStaff } = breakdown.assigned_to
-    ? await supabase.from("profiles").select("full_name").eq("id", breakdown.assigned_to).single()
+    ? await supabase.from("profiles").select("full_name, sap_number").eq("id", breakdown.assigned_to).single()
     : { data: null };
 
   const { data: reporter } = breakdown.reported_by
@@ -42,6 +43,20 @@ export default async function BreakdownDetailPage({ params }: { params: { id: st
     .order("created_at", { ascending: true });
 
   const comments: CommentWithAuthor[] = (rawComments ?? []).map((c: any) => ({
+    id: c.id,
+    body: c.body,
+    created_at: c.created_at,
+    author_name: c.profiles?.full_name ?? "Unknown",
+  }));
+
+  const { data: rawReviewComments } = await supabase
+    .from("comments")
+    .select("id, body, created_at, user_id, profiles(full_name)")
+    .eq("entity_type", "breakdown_review")
+    .eq("entity_id", params.id)
+    .order("created_at", { ascending: true });
+
+  const reviewComments: CommentWithAuthor[] = (rawReviewComments ?? []).map((c: any) => ({
     id: c.id,
     body: c.body,
     created_at: c.created_at,
@@ -101,7 +116,11 @@ export default async function BreakdownDetailPage({ params }: { params: { id: st
         <dl className="grid grid-cols-2 gap-4 text-sm">
           <div>
             <dt className="text-gray-500">Assigned to</dt>
-            <dd className="font-medium text-gray-900">{assignedStaff?.full_name ?? "Unassigned"}</dd>
+            <dd className="font-medium text-gray-900">
+              {assignedStaff?.full_name
+                ? `${assignedStaff.full_name}${assignedStaff.sap_number ? ` — SAP ${assignedStaff.sap_number}` : ""}`
+                : "Unassigned"}
+            </dd>
           </div>
           <div>
             <dt className="text-gray-500">Reported by</dt>
@@ -126,12 +145,22 @@ export default async function BreakdownDetailPage({ params }: { params: { id: st
             </dd>
           </div>
         </dl>
+        {(breakdown as any).assignment_note && (
+          <div className="mt-3 rounded-md bg-gray-50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Task Note</p>
+            <p className="mt-1 text-sm text-gray-700">{(breakdown as any).assignment_note}</p>
+          </div>
+        )}
       </Card>
 
       <BreakdownEditor breakdown={breakdown} />
 
       <Card>
         <PhotoUpload breakdownId={breakdown.id} photos={photos} />
+      </Card>
+
+      <Card>
+        <ReviewCommentThread breakdownId={breakdown.id} comments={reviewComments} canPost={canManage(role)} />
       </Card>
 
       <Card>
