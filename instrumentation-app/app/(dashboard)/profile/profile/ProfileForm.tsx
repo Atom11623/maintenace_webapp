@@ -82,7 +82,7 @@ export function ProfileForm({
         <div>
           <Badge tone="blue">{role}</Badge>
         </div>
-        <p className="mt-1 text-xs text-gray-400">Only an admin can change your role, from Admin → Users.</p>
+        <p className="mt-1 text-xs text-gray-400">Only an admin can change your role, from Admin to Users.</p>
       </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
