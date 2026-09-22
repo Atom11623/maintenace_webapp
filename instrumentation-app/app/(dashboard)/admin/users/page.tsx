@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card, Badge } from "@/components/ui/Card";
 import { RoleSelect } from "./RoleSelect";
+import { SapNumberInput } from "./SapNumberInput";
 import type { UserRole } from "@/types/database";
 import { ShieldCheck } from "lucide-react";
 
@@ -19,7 +20,7 @@ export default async function AdminUsersPage() {
 
   const { data: profiles } = await supabase
     .from("profiles")
-    .select("id, full_name, role, active")
+    .select("id, full_name, role, active, sap_number")
     .order("full_name");
 
   return (
@@ -29,19 +30,20 @@ export default async function AdminUsersPage() {
         <div>
           <h1 className="text-xl font-semibold text-gray-900">User Management</h1>
           <p className="text-sm text-gray-500">
-            {isAdmin ? "Change staff roles below — updates apply immediately." : "Staff directory (read-only)."}
+            {isAdmin ? "Change staff roles and SAP numbers below — updates apply immediately." : "Staff directory (read-only)."}
           </p>
         </div>
       </div>
 
-      <Card className="overflow-hidden p-0">
+      <Card className="overflow-x-auto p-0">
         {!profiles || profiles.length === 0 ? (
           <p className="p-8 text-center text-sm text-gray-400">No users yet.</p>
         ) : (
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[560px] text-sm">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                 <th className="p-3">Name</th>
+                <th className="p-3">SAP Number</th>
                 <th className="p-3">Role</th>
                 <th className="p-3">Status</th>
               </tr>
@@ -50,6 +52,9 @@ export default async function AdminUsersPage() {
               {profiles.map((p) => (
                 <tr key={p.id} className="border-b border-gray-50 transition-colors last:border-0 hover:bg-gray-50/60">
                   <td className="p-3 font-medium text-gray-900">{p.full_name}</td>
+                  <td className="p-3">
+                    <SapNumberInput userId={p.id} initialValue={p.sap_number ?? ""} disabled={!isAdmin} />
+                  </td>
                   <td className="p-3">
                     <RoleSelect
                       userId={p.id}
@@ -70,7 +75,8 @@ export default async function AdminUsersPage() {
       {isAdmin && (
         <Card className="bg-blue-50/50 text-sm text-gray-600">
           You can&apos;t change your own role here, to avoid accidentally locking yourself out of admin access.
-          Ask another admin, or use the Supabase SQL Editor if you&apos;re the only one.
+          Ask another admin, or use the Supabase SQL Editor if you&apos;re the only one. Each staff member can also
+          set their own SAP number from their My Profile page.
         </Card>
       )}
     </div>
